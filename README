@@ -1,0 +1,8 @@
+Future home of Apache Velocity integration with JRuby on Rails.
+
+Includes (and current state):
+
+  * Rails ActionView::TemplateHandler implementation (prototype)
+  * Velocity RubyUberspect to cleanly use RubyObject's (future)
+  * Dynamic macro hook to allow Rails helpers like url_for to work as a #url_for macro (future)
+  
