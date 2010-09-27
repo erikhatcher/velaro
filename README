@@ -1,8 +1,19 @@
-Future home of Apache Velocity integration with JRuby on Rails.
+Home of Apache Velocity integration with JRuby on Rails.
 
-Includes (and current state):
+Current state:
 
   * Rails ActionView::TemplateHandler implementation (prototype)
+
+Future needs:
+
   * Velocity RubyUberspect to cleanly use RubyObject's (future)
   * Dynamic macro hook to allow Rails helpers like url_for to work as a #url_for macro (future)
   
+FAQ
+
+  Q: What's the name all about?
+  A: Velocity + Rails => high speed rail => http://en.wikipedia.org/wiki/High-speed_rail,
+     where the Siemens Velaro appears.  Velaro begins with "vel"ocity.
+
+  Q: Will this work with MRI Ruby?
+  A: No, it requires JRuby.
