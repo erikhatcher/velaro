@@ -1,0 +1,6 @@
+<html>
+  <head><title>Velaro Demo</title></head>
+  <body>
+    The value of @var is <b>$var</b>
+  </body>
+</html>
