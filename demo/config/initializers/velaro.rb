@@ -44,20 +44,21 @@ module Velaro
       #   velaro.render
       # VELARO
       
-      vtr_class = template.virtual_path.gsub(/\//,'_').camelize
-      if !Velaro.const_defined?(vtr_class)
-        Velaro.module_eval <<-VTRIMPL
-          class #{vtr_class} < VelocityTemplateRenderer
-            cattr_accessor :template
-          end
-        VTRIMPL
+      vtr_class_name = template.virtual_path.gsub(/\//,'_').camelize
+      if Velaro.const_defined?(vtr_class_name)
+        vtr_class = Velaro.const_get(vtr_class_name)
+      else
+        vtr_class = Class.new(VelocityTemplateRenderer) do
+          cattr_accessor :template
+        end
+        Velaro.const_set(vtr_class_name, vtr_class)
       end
       
       # TODO: does this deserve caching consideration?
-      "Velaro::#{vtr_class}".constantize.template=template
+      vtr_class.template=template
       
       <<-VTR
-        vtr=Velaro::#{vtr_class}.new
+        vtr=Velaro::#{vtr_class_name}.new
         var_names = controller.instance_variable_names - %w[@template]
         if controller.respond_to?(:protected_instance_variables)
           var_names -= controller.protected_instance_variables
