@@ -2,14 +2,19 @@ Home of Apache Velocity integration with JRuby on Rails.
 
 Current state:
 
-  * Rails ActionView::TemplateHandler implementation (prototype)
+Rails ActionView::TemplateHandler implementation, supporting instance and local variables as $variables.
 
-Future needs:
+Future goals:
 
-  * Velocity RubyUberspect to cleanly use RubyObject's (future)
-  * Dynamic macro hook to allow Rails helpers like url_for to work as a #url_for macro (future)
+  * Velocity RubyUberspect to cleanly use RubyObjects
+  * Dynamic macro hook to allow Rails helpers like url_for to work as a #url_for macro
   
 FAQ
+  Q: What's the big picture?
+  A: Renders templates with .vel suffix through the Apache Velocity template engine
+
+  Q: What's Velocity?
+  A: http://velocity.apache.org
 
   Q: What's the name all about?
   A: Velocity + Rails => high speed rail => http://en.wikipedia.org/wiki/High-speed_rail,
@@ -17,3 +22,32 @@ FAQ
 
   Q: Will this work with MRI Ruby?
   A: No, it requires JRuby.
+
+Example:
+
+example_controller.rb
+---------------------
+class ExampleController < Application
+  layout false
+  def index
+    @var = "whatever"
+  end
+end
+
+index.html.vel
+--------------
+<html>
+  <head><title>Velaro Demo</title></head>
+  <body>
+    The value of @var is <b>$var</b>
+  </body>
+</html>
+
+Output
+------
+<html>
+  <head><title>Velaro Demo</title></head>
+  <body>
+    The value of @var is <b>whatever</b>
+  </body>
+</html>
