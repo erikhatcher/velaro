@@ -1,0 +1,2 @@
+module VelaroHelper
+end

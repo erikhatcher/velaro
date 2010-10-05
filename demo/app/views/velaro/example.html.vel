@@ -1,0 +1,9 @@
+<h1>Velaro#example</h1>
+
+@foo = $foo
+
+<hr/>
+
+local_assigns = $local_assigns
+
+view = $view
