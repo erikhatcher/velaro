@@ -5,7 +5,7 @@ if RUBY_PLATFORM == "java"
   # TODO: perhaps externalize this classpath thing so the environment or higher up config controls?
   # $CLASSPATH << "file:///#{File.expand_path(File.join(RAILS_ROOT, 'lib'))}/velocity-1.6.4-dep.jar"
 	
-	require "#{Rails.root.join('lib/velocity-1.6.4-dep.jar')}"
+	require Rails.root + '/lib/velocity-1.6.4-dep.jar'
 
   java_import 'org.apache.velocity.app.Velocity'
   java_import 'org.apache.velocity.VelocityContext'
@@ -67,7 +67,6 @@ module Velaro
     
     def load_locals(context, local_assigns)
       local_assigns.each do |k,v|
-Rails.logger.debug("local var:  #{k}=#{v}")
         context.put(k, v)
       end
     end
