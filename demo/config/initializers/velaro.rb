@@ -24,11 +24,9 @@ module Velaro
     
     def compile(template)
       vt_name = template.virtual_path
-      if vt = templates[vt_name]
-        vt.template=(template)
-      else
-        templates[vt_name] = VelocityTemplate.new(template)
-      end
+      
+      templates[vt_name] ||= VelocityTemplate.new
+      templates[vt_name].template = template
 
       %{::Velaro::VelocityViewHandler.templates['#{vt_name}'].render_it(controller, self, local_assigns)}
     end
@@ -53,8 +51,8 @@ module Velaro
   class VelocityTemplate
     attr_accessor :renderer
     
-    def initialize(template)
-      self.template = template
+    def initialize(template=nil)
+      self.template = template unless template.nil?
     end
     
     def template=(template)
