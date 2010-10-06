@@ -24,18 +24,41 @@ module Velaro
     
     def compile(template)
       vt_name = template.virtual_path
-      templates[vt_name] ||= VelocityTemplate.new(template)
+      if vt = templates[vt_name]
+        vt.template=(template)
+      else
+        templates[vt_name] = VelocityTemplate.new(template)
+      end
 
       %{::Velaro::VelocityViewHandler.templates['#{vt_name}'].render_it(controller, self, local_assigns)}
     end
     
   end
   
-  class VelocityTemplate
+  class VelocityTemplateRenderer
     attr_accessor :template
     
     def initialize(template)
       self.template = template
+    end
+    
+    def render(context)
+      writer = StringWriter.new
+      Velocity.init
+      Velocity.evaluate(context, writer, "LOG", template.source)
+      writer.getBuffer.to_s
+    end
+  end
+  
+  class VelocityTemplate
+    attr_accessor :renderer
+    
+    def initialize(template)
+      self.template = template
+    end
+    
+    def template=(template)
+      self.renderer = VelocityTemplateRenderer.new(template)
     end
     
     def render_it(controller, view, local_assigns)
@@ -53,10 +76,7 @@ module Velaro
       context.put('local_assigns', local_assigns)
       # context.put('view', @view)
       
-      writer = StringWriter.new
-      Velocity.init
-      Velocity.evaluate(context, writer, "LOG", template.source)
-      writer.getBuffer.to_s
+      renderer.render(context)      
     end
     
     def load_instance_variables(context, controller)
