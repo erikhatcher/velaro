@@ -19,95 +19,64 @@ module Velaro
   class VelocityViewHandler < ActionView::TemplateHandler
     include ActionView::Template::Handlers::Compilable
   
+    cattr_accessor :templates
+    self.templates = {}
+    
     def compile(template)
-      
-      #  borrowed from http://gist.github.com/449345
-      # <<-VELARO
-      #   velaro = ::#{velaro_class}.new
-      #   # velaro.view = self
-      #   # velaro[:yield] = content_for(:layout)
-      #   # velaro.context.update(local_assigns)
-      #   # variables = controller.instance_variable_names
-      #   # variables -= %w[@template]
-      #   # if controller.respond_to?(:protected_instance_variables)
-      #   #   variables -= controller.protected_instance_variables
-      #   # end
-      #   # variables.each do |name|
-      #   #   velaro.instance_variable_set(name, controller.instance_variable_get(name))
-      #   # end
-      #   # Declaring an +attr_reader+ for each instance variable in the
-      #   # Mustache::Rails subclass makes them available to your templates.
-      #   # TODO: velaro.class.class_eval do
-      #   #   attr_reader *variables.map { |name| name.sub(/^@/, '').to_sym }
-      #   # end
-      # 
-      #   velaro.render
-      # VELARO
-      
-      vtr_class_name = template.virtual_path.gsub(/\//,'_').camelize
-      if Velaro.const_defined?(vtr_class_name)
-        vtr_class = Velaro.const_get(vtr_class_name)
-      else
-        vtr_class = Class.new(VelocityTemplateRenderer) do
-          cattr_accessor :template
-        end
-        Velaro.const_set(vtr_class_name, vtr_class)
-      end
-      
-      # TODO: does this deserve caching consideration?
-      vtr_class.template=template
-      
-      <<-VTR
-        vtr=Velaro::#{vtr_class_name}.new
-        var_names = controller.instance_variable_names - %w[@template]
-        if controller.respond_to?(:protected_instance_variables)
-          var_names -= controller.protected_instance_variables
-        end
-        variables = {}
-        var_names.each do |name|
-          variables[name[1..-1]] = controller.instance_variable_get(name)
-        end
-        vtr.instance_variables = variables
-        vtr.local_assigns = local_assigns
-        vtr.view = self
-        # TODO: params?  request?  env? lookup context?  status? or all gotten from view?
-        # content_for(:layout) - do we need to do something with this?
-        vtr.render_it
-      VTR
+      vt_name = template.virtual_path
+      templates[vt_name] ||= VelocityTemplate.new(template)
+
+      %{::Velaro::VelocityViewHandler.templates['#{vt_name}'].render_it(controller, self, local_assigns)}
     end
+    
   end
   
-  class VelocityTemplateRenderer
-    attr_accessor :instance_variables
-    attr_accessor :view
-    attr_accessor :local_assigns
+  class VelocityTemplate
+    attr_accessor :template
     
-    def render_it
+    def initialize(template)
+      self.template = template
+    end
+    
+    def render_it(controller, view, local_assigns)
       return template.source if RUBY_PLATFORM != "java"
-  
+
       #   "#{template} : #{local_assigns} :: #{template.source}"
       # TODO: Uberspecter for Ruby objects?
       # TODO: use VelocityEngine, etc, from Solritas usage
       context = VelocityContext.new
+
+      load_instance_variables(context, controller)
+      load_locals(context, local_assigns)
+
+      context.put('view', self)
+      context.put('local_assigns', local_assigns)
+      # context.put('view', @view)
       
-      instance_variables.each do |k,v|
-Rails.logger.debug("instance var:  #{k}=#{v}")
-        context.put(k, v)
+      writer = StringWriter.new
+      Velocity.init
+      Velocity.evaluate(context, writer, "LOG", template.source)
+      writer.getBuffer.to_s
+    end
+    
+    def load_instance_variables(context, controller)
+      instance_variable_names(controller).each do |name|
+        context.put(name[1..-1], controller.instance_variable_get(name))
       end
-      
+    end
+    
+    def load_locals(context, local_assigns)
       local_assigns.each do |k,v|
 Rails.logger.debug("local var:  #{k}=#{v}")
         context.put(k, v)
       end
+    end
+    
+    def instance_variable_names(controller)
+      ivars = controller.instance_variable_names - ["@template"]
+      return ivars unless controller.respond_to?(:protected_instance_variables)
       
-      context.put('view', view)
-      
-      context.put('local_assigns', local_assigns)
-      # context.put('view', @view)
-      writer = StringWriter.new
-      Velocity.init
-      Velocity.evaluate(context, writer, "LOG", self.template.source)
-      writer.getBuffer.to_s
+      ivars - controller.protected_instance_variables
     end
   end
 end
